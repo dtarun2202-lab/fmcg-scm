@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING
+  PARTIALLY_ALLOCATED
+  ALLOCATED
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+enum OrderPriority {
+  LOW
+  STANDARD
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      String   @default("planner") // planner | admin | warehouse_ops
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id             String   @id @default(uuid())
+  sku            String   @unique
+  name           String
+  category       String
+  shelfLifeDays  Int // used to derive expiry when batch is created
+  unitCost       Float
+  reorderPoint   Int      @default(0) // recalculated by forecast service
+  safetyStock    Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  batches       InventoryBatch[]
+  orderItems    OrderItem[]
+  demandHistory DemandHistory[]
+}
+
+model Warehouse {
+  id       String  @id @default(uuid())
+  name     String
+  location String
+  lat      Float
+  lng      Float
+  capacity Int
+
+  batches      InventoryBatch[]
+  routesFrom   DistributionRoute[] @relation("RouteWarehouse")
+  demandRecords DemandHistory[]
+}
+
+// Each batch is a distinct lot with its own expiry -> enables FEFO dispatch
+model InventoryBatch {
+  id          String   @id @default(uuid())
+  productId   String
+  warehouseId String
+  quantity    Int
+  mfgDate     DateTime
+  expiryDate  DateTime
+  createdAt   DateTime @default(now())
+
+  product   Product   @relation(fields: [productId], references: [id])
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+
+  @@index([productId, warehouseId, expiryDate])
+}
+
+model Retailer {
+  id       String @id @default(uuid())
+  name     String
+  location String
+  lat      Float
+  lng      Float
+
+  orders Order[]
+  routesTo DistributionRoute[] @relation("RouteRetailer")
+}
+
+model Order {
+  id         String        @id @default(uuid())
+  retailerId String
+  status     OrderStatus   @default(PENDING)
+  priority   OrderPriority @default(STANDARD)
+  createdAt  DateTime      @default(now())
+
+  retailer Retailer    @relation(fields: [retailerId], references: [id])
+  items    OrderItem[]
+}
+
+model OrderItem {
+  id            String @id @default(uuid())
+  orderId       String
+  productId     String
+  requestedQty  Int
+  allocatedQty  Int    @default(0)
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+// Precomputed edges between warehouses and retailers for the routing graph
+model DistributionRoute {
+  id            String @id @default(uuid())
+  warehouseId   String
+  retailerId    String
+  distanceKm    Float
+  avgTransitMin Int
+
+  warehouse Warehouse @relation("RouteWarehouse", fields: [warehouseId], references: [id])
+  retailer  Retailer  @relation("RouteRetailer", fields: [retailerId], references: [id])
+
+  @@unique([warehouseId, retailerId])
+}
+
+// Daily demand snapshots feed the forecasting / reorder-point service
+model DemandHistory {
+  id          String   @id @default(uuid())
+  productId   String
+  warehouseId String
+  date        DateTime
+  unitsSold   Int
+
+  product   Product   @relation(fields: [productId], references: [id])
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+
+  @@index([productId, warehouseId, date])
+}
