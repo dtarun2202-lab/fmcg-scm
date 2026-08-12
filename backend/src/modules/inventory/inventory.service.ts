@@ -7,6 +7,18 @@ interface BatchLite {
   expiryDate: Date;
 }
 
+export async function getAllInventoryBatches() {
+  return prisma.inventoryBatch.findMany({
+    orderBy: {
+      expiryDate: "asc",
+    },
+    include: {
+      product: true,
+      warehouse: true,
+    },
+  });
+}
+
 /**
  * FEFO dispatch: given a product + warehouse and a quantity to fulfil,
  * pull from the batch expiring soonest first. Returns which batches to

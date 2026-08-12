@@ -5,6 +5,7 @@ import { inventoryRouter } from "./modules/inventory/inventory.routes";
 import { ordersRouter } from "./modules/orders/orders.routes";
 import { logisticsRouter } from "./modules/logistics/logistics.routes";
 import { forecastRouter } from "./modules/forecast/forecast.routes";
+import { productsRouter } from "./modules/products/products.route";
 
 export const app = express();
 
@@ -18,3 +19,4 @@ app.use("/api/inventory", inventoryRouter);
 app.use("/api/orders", ordersRouter);
 app.use("/api/logistics", logisticsRouter);
 app.use("/api/forecast", forecastRouter);
+app.use("/api/products", productsRouter);

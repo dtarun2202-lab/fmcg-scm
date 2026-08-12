@@ -7,16 +7,26 @@ export async function getExpiringBatchesHandler(req: Request, res: Response) {
   res.json({ count: batches.length, batches });
 }
 
-export async function previewDispatchHandler(req: Request, res: Response) {
+export async function previewDispatchHandler(
+  req: Request,
+  res: Response
+) {
   try {
-    const { productId, warehouseId, quantity } = req.body as {
-      productId: string;
-      warehouseId: string;
-      quantity: number;
-    };
-    const plan = await planFefoDispatch(productId, warehouseId, quantity);
-    res.json({ plan });
-  } catch (err) {
-    res.status(409).json({ error: (err as Error).message });
+    const { productId, warehouseId, quantity } = req.body;
+
+    const plan = await planFefoDispatch(
+      productId,
+      warehouseId,
+      quantity
+    );
+
+    res.json({
+      quantityRequested: quantity,
+      plan,
+    });
+  } catch (error) {
+    res.status(409).json({
+      error: (error as Error).message,
+    });
   }
 }

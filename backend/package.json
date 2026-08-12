@@ -15,6 +15,9 @@
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",
+    "@supabase/server": "^1.4.1",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.2",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -28,12 +31,12 @@
     "@types/express": "^4.17.21",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^20.14.9",
+    "@types/node": "^20.19.43",
     "jest": "^29.7.0",
     "prisma": "^5.19.0",
     "ts-jest": "^29.4.12",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.5.3"
+    "typescript": "^5.9.3"
   }
 }
